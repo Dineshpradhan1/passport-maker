@@ -98,8 +98,6 @@
             @page { margin: 0; }
         }
     </style>
-    
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 
@@ -256,7 +254,6 @@
     <script>
         // --- State Management ---
         const AppState = {
-            isPaidUser: false, // Payment Tracking
             photos: [],
             activePhotoId: null,
             DPI: 300,
@@ -320,14 +317,6 @@
         };
 
         function init() {
-            // Check if user just paid successfully
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('paid') === 'true') {
-                AppState.isPaidUser = true;
-                alert("Payment successful! You can now download your high-res photos.");
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
             setupEventListeners();
             loadSettings();
 
@@ -345,42 +334,6 @@
                 img.src = pendingImage;
             } else {
                 updateUI();
-            }
-        }
-
-        // --- RAZORPAY CHECKOUT LOGIC ---
-        async function handleCheckout() {
-            try {
-                const response = await fetch('/create-order', { method: 'POST' });
-                const order = await response.json();
-
-                if (!order.id) {
-                    alert("Error creating order. Is the server running?");
-                    return;
-                }
-
-                const options = {
-                    "key": "YOUR_RAZORPAY_TEST_KEY_ID", // IMPORTANT: REPLACE THIS!
-                    "amount": order.amount,
-                    "currency": order.currency,
-                    "name": "Passport Photo Maker Pro",
-                    "description": "Premium High-Res Download",
-                    "image": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
-                    "order_id": order.id,
-                    "handler": function (response) {
-                        window.location.href = "editor.html?paid=true";
-                    },
-                    "theme": { "color": "#007bff" }
-                };
-
-                const rzp = new Razorpay(options);
-                rzp.on('payment.failed', function (response){
-                    alert("Payment failed or was cancelled. Please try again.");
-                });
-                rzp.open();
-            } catch (error) {
-                console.error("Checkout failed:", error);
-                alert("Payment system is currently unavailable. Is your server running?");
             }
         }
 
@@ -418,10 +371,10 @@
             els.paperMargin.addEventListener('input', updateSettings);
             els.photoSpacing.addEventListener('input', updateSettings);
             
-            // Paywall logic checks
-            els.btnPrint.addEventListener('click', () => { if (AppState.isPaidUser) printSheet(); else handleCheckout(); });
-            els.btnExportSingle.addEventListener('click', () => { if (AppState.isPaidUser) exportSinglePhoto(); else handleCheckout(); });
-            els.btnDownloadSheet.addEventListener('click', () => { if (AppState.isPaidUser) downloadSheets(); else handleCheckout(); });
+            // Buttons now directly execute downloads without paywall checks
+            els.btnPrint.addEventListener('click', printSheet);
+            els.btnExportSingle.addEventListener('click', exportSinglePhoto);
+            els.btnDownloadSheet.addEventListener('click', downloadSheets);
 
             els.canvas.addEventListener('mousedown', startPan);
             els.canvas.addEventListener('mousemove', doPan);
@@ -667,20 +620,6 @@
                     ctx.scale(finalScale, finalScale); ctx.drawImage(img, -img.width / 2, -img.height / 2); ctx.restore();
 
                     if (AppState.settings.strokeMm > 0) { ctx.save(); ctx.strokeStyle = AppState.settings.strokeColor; const strokePx = mmToPx(AppState.settings.strokeMm); ctx.lineWidth = strokePx; ctx.strokeRect(currentX + strokePx / 2, currentY + strokePx / 2, cw - strokePx, ch - strokePx); ctx.restore(); }
-
-                    // PER-PHOTO INDIVIDUAL WATERMARK
-                    if (!AppState.isPaidUser) {
-                        ctx.save();
-                        ctx.translate(currentX + cw / 2, currentY + ch / 2);
-                        ctx.beginPath(); ctx.rect(-cw / 2, -ch / 2, cw, ch); ctx.clip();
-                        const fontSize = cw / 6; 
-                        ctx.font = "bold " + fontSize + "px Arial";
-                        ctx.fillStyle = "rgba(220, 53, 69, 0.4)";
-                        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.rotate(-Math.PI / 4);
-                        ctx.fillText("PREVIEW", 0, -fontSize / 1.5);
-                        ctx.fillText("WATERMARK", 0, fontSize / 1.5);
-                        ctx.restore();
-                    }
 
                     ctx.strokeStyle = '#cccccc'; ctx.lineWidth = 1; ctx.strokeRect(currentX, currentY, cw, ch);
                     photoCount++; currentX += cw + spacing;
