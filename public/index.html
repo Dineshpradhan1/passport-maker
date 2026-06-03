@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passport Photo Maker Pro | Create ID Photos Online</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Exact color variables from your editor tool */
+        :root[data-theme="dark"] {
+            --bg-base: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent: #007bff;
+            --accent-hover: #0056b3;
+            --accent-info: #17a2b8;
+            --border: #333333;
+            --danger: #dc3545;
+            --success: #28a745;
+        }
+        :root[data-theme="light"] {
+            --bg-base: #f8f9fa;
+            --bg-panel: #ffffff;
+            --bg-hover: #e9ecef;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --accent: #0d6efd;
+            --accent-hover: #0b5ed7;
+            --accent-info: #0dcaf0;
+            --border: #dee2e6;
+            --danger: #dc3545;
+            --success: #198754;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { color: var(--text-main); background-color: var(--bg-base); line-height: 1.6; transition: background-color 0.3s, color 0.3s; }
+        a { text-decoration: none; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        header { background-color: var(--bg-panel); border-bottom: 1px solid var(--border); padding: 12px 0; position: sticky; top: 0; z-index: 100; }
+        .nav-container { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.3rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .logo span { color: var(--text-main); }
+        .nav-actions { display: flex; gap: 10px; align-items: center; }
+
+        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; transition: all 0.2s; display: inline-block; text-align: center; cursor: pointer; border: none; font-size: 0.9rem; }
+        .btn-outline { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); }
+        .btn-outline:hover { background-color: var(--bg-hover); }
+        .btn-primary { background-color: var(--accent); color: #ffffff; }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+
+        .hero { padding: 80px 0 120px 0; text-align: center; position: relative; }
+        .hero h1 { font-size: 3rem; color: var(--text-main); line-height: 1.2; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto; }
+        .hero p { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+        .upload-card { background-color: var(--bg-panel); border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); max-width: 800px; margin: -80px auto 60px auto; padding: 40px; position: relative; z-index: 10; text-align: center; border: 1px solid var(--border); }
+        .dropzone { border: 2px dashed var(--border); border-radius: 6px; padding: 40px 20px; background-color: var(--bg-base); margin-bottom: 20px; transition: all 0.2s; cursor: pointer; }
+        .dropzone:hover { border-color: var(--accent); background-color: var(--bg-hover); }
+        .dropzone-icon { font-size: 3rem; margin-bottom: 10px; color: var(--accent); }
+        .trust-badges { display: flex; justify-content: center; gap: 20px; margin-top: 20px; color: var(--text-muted); font-size: 0.9rem; align-items: center; }
+
+        .how-it-works-section { text-align: center; padding: 20px 0 60px 0; }
+        .how-it-works-img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); background: white; padding: 10px; }
+
+        /* --- NEW VIDEO SECTION STYLES --- */
+        .video-section { text-align: center; padding: 60px 0; background-color: var(--bg-base); }
+        .video-section h2 { font-size: 2.2rem; color: var(--text-main); margin-bottom: 20px; }
+        .video-section p { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 40px; }
+        .video-container { max-width: 800px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border); background-color: var(--bg-panel); line-height: 0; }
+        .video-container video { width: 100%; height: auto; outline: none; }
+
+        .showcase { padding: 60px 0; }
+        .showcase-row { display: flex; align-items: center; gap: 50px; margin-bottom: 80px; }
+        .showcase-row.reverse { flex-direction: row-reverse; }
+        .showcase-text { flex: 1; }
+        .showcase-text h2 { font-size: 2rem; color: var(--text-main); margin-bottom: 20px; }
+        .showcase-text p { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 20px; }
+        .showcase-image { flex: 1; background-color: var(--bg-panel); border-radius: 8px; padding: 20px; border: 1px solid var(--border); text-align: center; }
+        .showcase-image img { max-width: 100%; border-radius: 4px; }
+        .check-list { list-style: none; margin-bottom: 20px; }
+        .check-list li { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; color: var(--text-main); }
+        .check-list li::before { content: '✓'; color: #fff; background-color: var(--success); border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+
+        .gallery-section { padding: 80px 0; background-color: var(--bg-panel); text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .gallery-section h2 { font-size: 2.2rem; color: var(--text-main); margin-bottom: 20px; }
+        .gallery-section p { color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem;}
+        .gallery-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .gallery-grid img { max-width: 100%; width: 350px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); border: 1px solid var(--border); background: white; }
+
+        .features { background-color: var(--bg-base); padding: 80px 0; text-align: center; }
+        .features h2 { font-size: 2.2rem; color: var(--text-main); margin-bottom: 50px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+        .feature-card { background-color: var(--bg-panel); padding: 30px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .feature-icon { background-color: var(--bg-base); color: var(--accent); width: 60px; height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 20px auto; border: 1px solid var(--border); }
+        .feature-card h3 { color: var(--text-main); margin-bottom: 10px; font-size: 1.2rem; }
+        .feature-card p { color: var(--text-muted); font-size: 0.95rem; }
+
+        .comparison { padding: 80px 0; }
+        .comparison h2 { text-align: center; font-size: 2.2rem; color: var(--text-main); margin-bottom: 50px; }
+        table { width: 100%; border-collapse: collapse; background-color: var(--bg-panel); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        th, td { padding: 20px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        th { background-color: var(--bg-base); font-weight: 600; font-size: 1.1rem; }
+        th:nth-child(2), td:nth-child(2) { background-color: var(--bg-hover); border-left: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+        th:nth-child(2) { border-top: 2px solid var(--accent); }
+        tr:last-child td:nth-child(2) { border-bottom: 2px solid var(--accent); }
+        .td-icon.check { color: var(--success); font-weight: bold; }
+        .td-icon.cross { color: var(--danger); }
+
+        .seo-text { background-color: var(--bg-panel); padding: 60px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .seo-content { max-width: 800px; margin: 0 auto; }
+        .seo-content h2 { color: var(--text-main); margin-bottom: 20px; }
+        .seo-content h3 { color: var(--text-main); margin: 30px 0 15px 0; font-size: 1.2rem; }
+        .seo-content p { color: var(--text-muted); margin-bottom: 15px; }
+        .seo-content ul { color: var(--text-muted); margin-bottom: 15px; padding-left: 20px; }
+        .seo-content li { margin-bottom: 8px; }
+
+        .bottom-cta { padding: 80px 0; text-align: center; }
+        .bottom-cta h2 { font-size: 2.5rem; margin-bottom: 20px; color: var(--text-main); }
+        .bottom-cta .btn-primary { font-size: 1.1rem; padding: 12px 30px; }
+        footer { background-color: var(--bg-panel); border-top: 1px solid var(--border); color: var(--text-muted); padding: 30px 0; text-align: center; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            .showcase-row, .showcase-row.reverse { flex-direction: column; text-align: center; gap: 30px; }
+            .check-list li { justify-content: center; }
+            table { font-size: 0.9rem; }
+            th, td { padding: 12px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container nav-container">
+            <a href="index.html" class="logo" style="text-decoration: none;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+                    <circle cx="12" cy="10" r="3"></circle>
+                    <path d="M7 20v-2a4 4 0 0 1 10 0v2"></path>
+                </svg>
+                <span>Passport</span><span style="color: var(--text-main);">Pro</span>
+            </a>
+            <div class="nav-actions">
+                <button class="btn btn-outline" id="themeToggle">Theme</button>
+                <div style="width: 1px; height: 20px; background: var(--border); margin: 0 5px;"></div>
+                <a href="editor.html" class="btn btn-primary">Open Editor Tool</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Create Perfect Passport & Visa Photos in Seconds</h1>
+            <p>Upload your photo, adjust to official specifications with our smart guides, and download ready-to-print layouts instantly. 100% compliant formatting.</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="upload-card">
+            <div class="dropzone" id="landingDropzone">
+                <input type="file" id="landingFileInput" accept="image/*" style="display: none;">
+                <div class="dropzone-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <h3 style="color: var(--text-main); font-size: 1.4rem; margin-bottom: 10px;">Upload an image or drop it here</h3>
+                <p style="color: var(--text-muted);">We'll open it in the Pro Editor</p>
+            </div>
+            <div class="trust-badges">
+                <span>🔒 Secure Checkout</span><span>•</span><span>✅ High-Resolution Export</span><span>•</span><span>🌍 Global Formats</span>
+            </div>
+        </div>
+    </div>
+    
+    <section class="how-it-works-section container">
+        <img src="image_f2e206.png" alt="3 Step Process: Photo, Edit, Print" class="how-it-works-img">
+    </section>
+
+    <!-- NEW VIDEO TUTORIAL SECTION -->
+    <section class="video-section">
+        <div class="container">
+            <h2>See How Easy It Is</h2>
+            <p>Watch exactly how to upload, edit, and generate your passport photos in under 60 seconds.</p>
+            <div class="video-container">
+                <!-- Video player uses your editor screenshot as a thumbnail -->
+                <video controls poster="image_f2dac8.jpg">
+                    <source src="tutorial.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </section>
+
+    <section class="showcase container">
+        <div class="showcase-row">
+            <div class="showcase-text">
+                <h2>Generate Ready-to-Print Sheets Instantly</h2>
+                <p>Don't waste money buying single photos. Our tool automatically duplicates your edited photo and perfectly spaces it onto standard paper sizes.</p>
+                <ul class="check-list">
+                    <li>Supports A4, 4x6 inch, and US Letter sizes.</li>
+                    <li>Customize margins and spacing for easy cutting.</li>
+                    <li>Add official photo borders/strokes with custom widths.</li>
+                </ul>
+                <a href="editor.html" class="btn btn-primary" style="margin-top: 15px;">Try the Layout Generator</a>
+            </div>
+            <div class="showcase-image">
+                <img src="image_f2e1a9.png" alt="Printed passport photos on a desk">
+            </div>
+        </div>
+
+        <div class="showcase-row reverse">
+            <div class="showcase-text">
+                <h2>Advanced Brightness & Alignment Editor</h2>
+                <p>Passport offices reject photos that are too dark or tilted. Use our built-in editing suite to perfect your image before printing.</p>
+                <ul class="check-list">
+                    <li>Built-in facial alignment guides (green bounding box).</li>
+                    <li>Precise Zoom, Pan, and Rotation controls.</li>
+                    <li>Adjust Brightness and Contrast to fix bad lighting.</li>
+                </ul>
+            </div>
+            <div class="showcase-image">
+                <img src="image_f2dac8.jpg" alt="Passport Maker Pro Editor Interface">
+            </div>
+        </div>
+    </section>
+
+    <section class="gallery-section">
+        <div class="container">
+            <h2>Flawless Exports Every Time</h2>
+            <p>Generate highly compliant layout grids ready for physical printing at your local shop.</p>
+            <div class="gallery-grid">
+                <img src="image_f2e1c9.png" alt="Example layout sheet">
+                <img src="image_f2e16a.png" alt="Example layout sheet">
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2>Everything you need for official photos</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
+                    <h3>Global Presets</h3>
+                    <p>Pre-loaded dimensions for USA, India, UK, Schengen, and custom sizing.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></div>
+                    <h3>Seamless Payments</h3>
+                    <p>Integrated checkout allows safe and instant payments via UPI, Cards, or Net Banking.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></div>
+                    <h3>High-Res Export</h3>
+                    <p>Download uncompressed images guaranteed to pass physical print inspections.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+                    <h3>Privacy First</h3>
+                    <p>Your photos are edited locally. We don't store your sensitive biometric data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="comparison container">
+        <h2>Why use our online tool?</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>PassportMaker Pro</th>
+                    <th>Local Photo Studio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Average Cost</strong></td>
+                    <td>₹49</td>
+                    <td>₹300 - ₹500</td>
+                </tr>
+                <tr>
+                    <td><strong>Time Spent</strong></td>
+                    <td>2 Minutes</td>
+                    <td>1 - 2 Hours</td>
+                </tr>
+                <tr>
+                    <td><strong>Multiple Retakes</strong></td>
+                    <td class="td-icon check">Unlimited</td>
+                    <td class="td-icon cross">Usually 1-2</td>
+                </tr>
+                <tr>
+                    <td><strong>Digital + Print Layout</strong></td>
+                    <td class="td-icon check">Yes, Both Included</td>
+                    <td class="td-icon cross">Extra fee for digital</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="bottom-cta">
+        <div class="container">
+            <h2>Ready to create your official photo?</h2>
+            <p style="margin-bottom: 30px; font-size: 1.1rem; color: var(--text-muted);">No signup required. Start editing immediately.</p>
+            <a href="editor.html" class="btn btn-primary">Launch Photo Editor</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Passport Photo Maker Pro. All rights reserved.</p>
+            <p style="font-size: 0.85rem; margin-top: 10px;">The smart way to format, edit, and arrange ID photos.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Shared Theme Logic
+        function initTheme() {
+            const themeToggleBtn = document.getElementById('themeToggle');
+            const savedTheme = localStorage.getItem('passport_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', nextTheme);
+                localStorage.setItem('passport_theme', nextTheme);
+            });
+        }
+        initTheme();
+
+        // Landing Page Upload Logic -> Passes to editor.html via sessionStorage
+        const landingDropzone = document.getElementById('landingDropzone');
+        const landingFileInput = document.getElementById('landingFileInput');
+
+        if (landingDropzone && landingFileInput) {
+            landingDropzone.addEventListener('click', () => landingFileInput.click());
+            
+            landingDropzone.addEventListener('dragover', (e) => { 
+                e.preventDefault(); 
+                landingDropzone.style.borderColor = 'var(--accent)'; 
+                landingDropzone.style.backgroundColor = 'var(--bg-hover)';
+            });
+            
+            landingDropzone.addEventListener('dragleave', (e) => { 
+                landingDropzone.style.borderColor = 'var(--border)'; 
+                landingDropzone.style.backgroundColor = 'var(--bg-base)';
+            });
+            
+            landingDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                landingDropzone.style.borderColor = 'var(--border)';
+                landingDropzone.style.backgroundColor = 'var(--bg-base)';
+                handleLandingUpload(e.dataTransfer.files);
+            });
+
+            landingFileInput.addEventListener('change', (e) => {
+                handleLandingUpload(e.target.files);
+            });
+        }
+
+        function handleLandingUpload(files) {
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        sessionStorage.setItem('pendingImage', e.target.result);
+                        window.location.href = 'editor.html';
+                    } catch(err) {
+                        alert("File is very large. Please upload it directly inside the editor.");
+                        window.location.href = 'editor.html';
+                    }
+                };
+                reader.readAsDataURL(files[0]);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passport Photo Maker Pro | Editor</title>
+    <style>
+        :root[data-theme="dark"] {
+            --bg-base: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-hover: #2d2d2d;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent: #007bff;
+            --accent-hover: #0056b3;
+            --accent-info: #17a2b8;
+            --border: #333333;
+            --danger: #dc3545;
+            --preview-bg: #222222;
+        }
+        :root[data-theme="light"] {
+            --bg-base: #f8f9fa;
+            --bg-panel: #ffffff;
+            --bg-hover: #e9ecef;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --accent: #0d6efd;
+            --accent-hover: #0b5ed7;
+            --accent-info: #0dcaf0;
+            --border: #dee2e6;
+            --danger: #dc3545;
+            --preview-bg: #e0e0e0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-base); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
+
+        .navbar { height: 60px; background-color: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .action-group { display: flex; gap: 10px; align-items: center; }
+        .theme-toggle, .btn-primary, .btn-secondary { color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: background-color 0.2s; }
+        .btn-primary { background-color: var(--accent); }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+        .btn-secondary { background-color: #28a745; }
+        .btn-secondary:hover { background-color: #218838; }
+        .btn-outline { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+        .btn-outline:hover { background-color: var(--bg-hover); }
+
+        .app-container { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 320px; background-color: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-right { border-right: none; border-left: 1px solid var(--border); }
+        .workspace { flex: 1; display: flex; flex-direction: column; background-color: var(--bg-base); position: relative; }
+
+        .tabs { display: flex; background-color: var(--bg-panel); border-bottom: 1px solid var(--border); }
+        .tab { padding: 12px 24px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; font-weight: 500; transition: color 0.2s, border-color 0.2s; }
+        .tab:hover { color: var(--text-main); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .canvas-container { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; padding: 20px; position: relative; }
+        canvas { background-color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 100%; max-height: 100%; object-fit: contain; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+
+        .scroll-mode-indicator { position: absolute; top: 20px; right: 20px; background-color: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; pointer-events: none; display: none; z-index: 10; }
+
+        .panel { padding: 15px; border-bottom: 1px solid var(--border); }
+        .panel-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; color: var(--text-main); cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s; }
+        .form-group label:hover { background-color: var(--bg-hover); }
+        .adjustment-active { background-color: rgba(0, 123, 255, 0.15) !important; border-left: 3px solid var(--accent); padding-left: 8px !important; }
+        .form-control { width: 100%; padding: 8px; background-color: var(--bg-base); border: 1px solid var(--border); color: var(--text-main); border-radius: 4px; outline: none; }
+        .form-control:focus { border-color: var(--accent); }
+        input[type="range"] { width: 100%; margin-top: 5px; accent-color: var(--accent); }
+
+        .upload-area { border: 2px dashed var(--border); padding: 25px 20px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 15px; transition: border-color 0.2s, background-color 0.2s; color: var(--text-muted); font-size: 0.9rem; }
+        .upload-area:hover { border-color: var(--accent); background-color: rgba(0, 123, 255, 0.05); }
+
+        .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .photo-item { position: relative; aspect-ratio: 3/4; border: 2px solid transparent; border-radius: 4px; overflow: hidden; cursor: pointer; background-color: #000; }
+        .photo-item.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3); }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: opacity 0.2s; }
+        .photo-item.active img, .photo-item:hover img { opacity: 1; }
+        .photo-controls { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); padding: 4px 6px; display: flex; justify-content: space-between; align-items: center; }
+        .copy-input { width: 45px; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; text-align: center; font-size: 0.8rem; border-radius: 3px; padding: 2px; }
+        .btn-delete { background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0 4px; }
+        .btn-delete:hover { color: #ff1a1a; }
+
+        #print-preview-container { display: none; background: var(--preview-bg); padding: 30px; overflow-y: auto; flex: 1; flex-direction: column; align-items: center; gap: 30px; }
+        .sheet { background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.3); position: relative; flex-shrink: 0; }
+        .badge { background-color: var(--accent-info); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 0.85rem; margin-top: 10px; display: none; text-align: center; font-weight: 500; }
+        .badge.error { background-color: var(--danger); }
+        #print-area { display: none; }
+
+        @media print {
+            body { background: white; }
+            .navbar, .app-container { display: none !important; }
+            #print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            .print-page { page-break-after: always; display: block; width: 100% !important; height: auto !important; }
+            @page { margin: 0; }
+        }
+    </style>
+    
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+                <circle cx="12" cy="10" r="3"></circle>
+                <path d="M7 20v-2a4 4 0 0 1 10 0v2"></path>
+            </svg>
+            <h1 style="font-size: 1.3rem; font-weight: 700; color: var(--accent); margin: 0;">Passport<span style="color: var(--text-main);">Pro</span></h1>
+        </a>
+
+        <div class="action-group">
+            <a href="index.html" class="btn-outline" style="text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Home
+            </a>
+            <button class="btn-outline" id="themeToggle">Theme</button>
+            <div style="width: 1px; height: 30px; background: var(--border); margin: 0 5px;"></div>
+            <button class="btn-secondary" id="btnExportSingle">Save Single Photo</button>
+            <button class="btn-primary" id="btnDownloadSheet" style="background-color: #6f42c1;">Download Sheet(s)</button>
+            <button class="btn-primary" id="btnPrint">Print / Save as PDF</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title">Photo Library</div>
+                <div class="upload-area" id="dropZone">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <p>Drag & Drop photos here<br>or click to upload</p>
+                    <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                </div>
+                <div class="photo-grid" id="photoGrid"></div>
+            </div>
+        </div>
+
+        <div class="workspace">
+            <div class="tabs">
+                <div class="tab active" data-target="editor">Edit Photo</div>
+                <div class="tab" data-target="preview">Layout Preview</div>
+            </div>
+            
+            <div class="canvas-container" id="editor-container">
+                <div class="scroll-mode-indicator" id="scrollIndicator">Scrolling: Zoom</div>
+                <canvas id="mainCanvas"></canvas>
+            </div>
+
+            <div id="print-preview-container"></div>
+        </div>
+
+        <div class="sidebar sidebar-right">
+            <div class="panel">
+                <div class="panel-title">Passport Presets</div>
+                <div class="form-group">
+                    <select class="form-control" id="presetSelect">
+                        <option value="custom">Custom Size</option>
+                        <option value="india" data-w="35" data-h="45">India (35x45 mm)</option>
+                        <option value="usa" data-w="51" data-h="51" selected>USA (2x2 inch)</option>
+                        <option value="uk" data-w="35" data-h="45">UK (35x45 mm)</option>
+                        <option value="schengen" data-w="35" data-h="45">Schengen (35x45 mm)</option>
+                        <option value="canada" data-w="50" data-h="70">Canada (50x70 mm)</option>
+                        <option value="australia" data-w="35" data-h="45">Australia (35x45 mm)</option>
+                        <option value="china" data-w="33" data-h="48">China (33x48 mm)</option>
+                        <option value="japan" data-w="35" data-h="45">Japan (35x45 mm)</option>
+                        <option value="brazil" data-w="50" data-h="70">Brazil (50x70 mm)</option>
+                        <option value="russia" data-w="35" data-h="45">Russia (35x45 mm)</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Width (mm)</label>
+                        <input type="number" class="form-control" id="customWidth" value="51">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Height (mm)</label>
+                        <input type="number" class="form-control" id="customHeight" value="51">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Image Adjustments (Click to scroll)</div>
+                <div class="form-group">
+                    <label id="lblZoom" class="adjustment-active" data-param="zoom"><span>Zoom</span> <span id="zoomVal">100%</span></label>
+                    <input type="range" id="zoomRange" min="10" max="300" value="100">
+                </div>
+                <div class="form-group">
+                    <label id="lblBright" data-param="brightness"><span>Brightness</span> <span id="brightVal">100%</span></label>
+                    <input type="range" id="brightRange" min="0" max="200" value="100">
+                </div>
+                <div class="form-group">
+                    <label id="lblContrast" data-param="contrast"><span>Contrast</span> <span id="contrastVal">100%</span></label>
+                    <input type="range" id="contrastRange" min="0" max="200" value="100">
+                </div>
+                <div class="form-group">
+                    <label id="lblRotate" data-param="rotation"><span>Rotation</span> <span id="rotateVal">0°</span></label>
+                    <input type="range" id="rotateRange" min="-180" max="180" value="0">
+                </div>
+                <button class="btn-outline" style="width: 100%; margin-top: 5px;" id="btnResetImage">Reset Adjustments</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Photo Stroke / Border</div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Border Width (mm)</label>
+                        <input type="number" class="form-control" id="strokeMm" value="0" min="0" max="5" step="0.1">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Border Color</label>
+                        <input type="color" class="form-control" id="strokeColor" value="#ffffff" style="padding: 2px; height: 38px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Print Layout Settings</div>
+                <div class="form-group">
+                    <label>Paper Size</label>
+                    <select class="form-control" id="paperSelect">
+                        <option value="a4" data-w="210" data-h="297" selected>A4 (210x297 mm)</option>
+                        <option value="4x6" data-w="101.6" data-h="152.4">4x6 inch</option>
+                        <option value="5x7" data-w="127" data-h="177.8">5x7 inch</option>
+                        <option value="letter" data-w="215.9" data-h="279.4">US Letter</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Orientation</label>
+                    <select class="form-control" id="orientationSelect">
+                        <option value="portrait">Portrait</option>
+                        <option value="landscape">Landscape</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Margin (mm)</label>
+                        <input type="number" class="form-control" id="paperMargin" value="10">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Spacing (mm)</label>
+                        <input type="number" class="form-control" id="photoSpacing" value="2">
+                    </div>
+                </div>
+                <div class="badge" id="layoutStatus">Generated 1 page</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-area"></div>
+
+    <script>
+        // --- State Management ---
+        const AppState = {
+            isPaidUser: false, // Payment Tracking
+            photos: [],
+            activePhotoId: null,
+            DPI: 300,
+            settings: {
+                preset: 'usa',
+                widthMm: 51,
+                heightMm: 51,
+                paper: 'a4',
+                paperWidthMm: 210,
+                paperHeightMm: 297,
+                orientation: 'portrait',
+                marginMm: 10,
+                spacingMm: 2,
+                strokeMm: 0,
+                strokeColor: '#ffffff'
+            },
+            adjustments: {}, 
+            isDragging: false,
+            startX: 0,
+            startY: 0,
+            activeScrollParam: 'zoom'
+        };
+
+        // --- DOM Elements ---
+        const els = {
+            themeToggle: document.getElementById('themeToggle'),
+            dropZone: document.getElementById('dropZone'),
+            fileInput: document.getElementById('fileInput'),
+            photoGrid: document.getElementById('photoGrid'),
+            canvas: document.getElementById('mainCanvas'),
+            ctx: document.getElementById('mainCanvas').getContext('2d'),
+            tabs: document.querySelectorAll('.tab'),
+            editorContainer: document.getElementById('editor-container'),
+            previewContainer: document.getElementById('print-preview-container'),
+            scrollIndicator: document.getElementById('scrollIndicator'),
+            presetSelect: document.getElementById('presetSelect'),
+            customWidth: document.getElementById('customWidth'),
+            customHeight: document.getElementById('customHeight'),
+            zoomRange: document.getElementById('zoomRange'),
+            brightRange: document.getElementById('brightRange'),
+            contrastRange: document.getElementById('contrastRange'),
+            rotateRange: document.getElementById('rotateRange'),
+            strokeMm: document.getElementById('strokeMm'),
+            strokeColor: document.getElementById('strokeColor'),
+            paperSelect: document.getElementById('paperSelect'),
+            orientationSelect: document.getElementById('orientationSelect'),
+            paperMargin: document.getElementById('paperMargin'),
+            photoSpacing: document.getElementById('photoSpacing'),
+            layoutStatus: document.getElementById('layoutStatus'),
+            btnPrint: document.getElementById('btnPrint'),
+            btnExportSingle: document.getElementById('btnExportSingle'),
+            btnDownloadSheet: document.getElementById('btnDownloadSheet'),
+            btnResetImage: document.getElementById('btnResetImage'),
+            printArea: document.getElementById('print-area'),
+            adjLabels: [
+                document.getElementById('lblZoom'),
+                document.getElementById('lblBright'),
+                document.getElementById('lblContrast'),
+                document.getElementById('lblRotate')
+            ]
+        };
+
+        function init() {
+            // Check if user just paid successfully
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('paid') === 'true') {
+                AppState.isPaidUser = true;
+                alert("Payment successful! You can now download your high-res photos.");
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            setupEventListeners();
+            loadSettings();
+
+            // Load Image passed from Landing Page via SessionStorage
+            const pendingImage = sessionStorage.getItem('pendingImage');
+            if (pendingImage) {
+                sessionStorage.removeItem('pendingImage'); 
+                const img = new Image();
+                img.onload = () => {
+                    const id = 'photo_' + Date.now() + Math.random().toString(36).substr(2, 9);
+                    AppState.photos.push({ id, file: null, url: pendingImage, imgElement: img, copies: 4 });
+                    AppState.adjustments[id] = { zoom: 100, brightness: 100, contrast: 100, rotation: 0, panX: 0, panY: 0 };
+                    setActivePhoto(id); 
+                };
+                img.src = pendingImage;
+            } else {
+                updateUI();
+            }
+        }
+
+        // --- RAZORPAY CHECKOUT LOGIC ---
+        async function handleCheckout() {
+            try {
+                const response = await fetch('/create-order', { method: 'POST' });
+                const order = await response.json();
+
+                if (!order.id) {
+                    alert("Error creating order. Is the server running?");
+                    return;
+                }
+
+                const options = {
+                    "key": "YOUR_RAZORPAY_TEST_KEY_ID", // IMPORTANT: REPLACE THIS!
+                    "amount": order.amount,
+                    "currency": order.currency,
+                    "name": "Passport Photo Maker Pro",
+                    "description": "Premium High-Res Download",
+                    "image": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+                    "order_id": order.id,
+                    "handler": function (response) {
+                        window.location.href = "editor.html?paid=true";
+                    },
+                    "theme": { "color": "#007bff" }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.on('payment.failed', function (response){
+                    alert("Payment failed or was cancelled. Please try again.");
+                });
+                rzp.open();
+            } catch (error) {
+                console.error("Checkout failed:", error);
+                alert("Payment system is currently unavailable. Is your server running?");
+            }
+        }
+
+        function setupEventListeners() {
+            els.themeToggle.addEventListener('click', toggleTheme);
+            
+            els.dropZone.addEventListener('click', () => els.fileInput.click());
+            els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.style.borderColor = 'var(--accent)'; });
+            els.dropZone.addEventListener('dragleave', (e) => { els.dropZone.style.borderColor = 'var(--border)'; });
+            els.dropZone.addEventListener('drop', handleDrop);
+            els.fileInput.addEventListener('change', handleFileSelect);
+
+            els.tabs.forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.target));
+            });
+
+            els.zoomRange.addEventListener('input', updateAdjustments);
+            els.brightRange.addEventListener('input', updateAdjustments);
+            els.contrastRange.addEventListener('input', updateAdjustments);
+            els.rotateRange.addEventListener('input', updateAdjustments);
+            els.btnResetImage.addEventListener('click', resetAdjustments);
+
+            els.adjLabels.forEach(label => {
+                label.addEventListener('click', () => setActiveScrollParam(label.dataset.param));
+            });
+
+            els.presetSelect.addEventListener('change', handlePresetChange);
+            els.customWidth.addEventListener('input', handleCustomSizeChange);
+            els.customHeight.addEventListener('input', handleCustomSizeChange);
+
+            els.strokeMm.addEventListener('input', updateSettings);
+            els.strokeColor.addEventListener('input', updateSettings);
+            els.paperSelect.addEventListener('change', handlePaperChange);
+            els.orientationSelect.addEventListener('change', handleOrientationChange);
+            els.paperMargin.addEventListener('input', updateSettings);
+            els.photoSpacing.addEventListener('input', updateSettings);
+            
+            // Paywall logic checks
+            els.btnPrint.addEventListener('click', () => { if (AppState.isPaidUser) printSheet(); else handleCheckout(); });
+            els.btnExportSingle.addEventListener('click', () => { if (AppState.isPaidUser) exportSinglePhoto(); else handleCheckout(); });
+            els.btnDownloadSheet.addEventListener('click', () => { if (AppState.isPaidUser) downloadSheets(); else handleCheckout(); });
+
+            els.canvas.addEventListener('mousedown', startPan);
+            els.canvas.addEventListener('mousemove', doPan);
+            window.addEventListener('mouseup', endPan);
+            els.editorContainer.addEventListener('wheel', handleCanvasScroll, { passive: false });
+            
+            els.canvas.addEventListener('mouseenter', () => { if(AppState.activePhotoId) els.scrollIndicator.style.display = 'block'; });
+            els.canvas.addEventListener('mouseleave', () => els.scrollIndicator.style.display = 'none');
+
+            els.canvas.addEventListener('touchstart', (e) => { const touch = e.touches[0]; startPan({ clientX: touch.clientX, clientY: touch.clientY }); });
+            els.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); const touch = e.touches[0]; doPan({ clientX: touch.clientX, clientY: touch.clientY }); }, { passive: false });
+            window.addEventListener('touchend', endPan);
+        }
+
+        function setActiveScrollParam(param) {
+            AppState.activeScrollParam = param;
+            els.adjLabels.forEach(l => l.classList.remove('adjustment-active'));
+            const activeLabel = Array.from(els.adjLabels).find(l => l.dataset.param === param);
+            if(activeLabel) {
+                activeLabel.classList.add('adjustment-active');
+                els.scrollIndicator.innerText = `Scrolling: ${param.charAt(0).toUpperCase() + param.slice(1)}`;
+            }
+        }
+
+        function handleCanvasScroll(e) {
+            if (!AppState.activePhotoId || els.editorContainer.style.display === 'none') return;
+            e.preventDefault();
+            const adj = AppState.adjustments[AppState.activePhotoId];
+            const direction = e.deltaY < 0 ? 1 : -1;
+            let rangeEl;
+            let step = 2;
+
+            switch(AppState.activeScrollParam) {
+                case 'zoom': step = 5; adj.zoom = clamp(adj.zoom + (direction * step), 10, 300); rangeEl = els.zoomRange; break;
+                case 'brightness': adj.brightness = clamp(adj.brightness + (direction * step), 0, 200); rangeEl = els.brightRange; break;
+                case 'contrast': adj.contrast = clamp(adj.contrast + (direction * step), 0, 200); rangeEl = els.contrastRange; break;
+                case 'rotation': step = 1; adj.rotation = clamp(adj.rotation + (direction * step), -180, 180); rangeEl = els.rotateRange; break;
+            }
+            if (rangeEl) rangeEl.value = adj[AppState.activeScrollParam];
+            syncAdjustmentSliders();
+            renderCanvas();
+        }
+
+        function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('passport_theme', next);
+        }
+
+        function loadSettings() {
+            const theme = localStorage.getItem('passport_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            const saved = localStorage.getItem('passport_settings');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    AppState.settings = { ...AppState.settings, ...parsed };
+                    els.presetSelect.value = AppState.settings.preset;
+                    els.customWidth.value = AppState.settings.widthMm;
+                    els.customHeight.value = AppState.settings.heightMm;
+                    els.strokeMm.value = AppState.settings.strokeMm || 0;
+                    els.strokeColor.value = AppState.settings.strokeColor || '#ffffff';
+                    els.paperSelect.value = AppState.settings.paper;
+                    els.orientationSelect.value = AppState.settings.orientation;
+                    els.paperMargin.value = AppState.settings.marginMm;
+                    els.photoSpacing.value = AppState.settings.spacingMm;
+                } catch(e) {}
+            }
+        }
+
+        function saveSettings() { localStorage.setItem('passport_settings', JSON.stringify(AppState.settings)); }
+
+        function updateUI() {
+            renderLibrary();
+            if (els.previewContainer.style.display === 'flex') generatePrintPreview();
+            else renderCanvas();
+        }
+
+        function handleDrop(e) { e.preventDefault(); els.dropZone.style.borderColor = 'var(--border)'; processFiles(e.dataTransfer.files); }
+        function handleFileSelect(e) { processFiles(e.target.files); e.target.value = ''; }
+
+        function processFiles(files) {
+            Array.from(files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    const id = 'photo_' + Date.now() + Math.random().toString(36).substr(2, 9);
+                    AppState.photos.push({ id, file, url, imgElement: img, copies: 4 });
+                    AppState.adjustments[id] = { zoom: 100, brightness: 100, contrast: 100, rotation: 0, panX: 0, panY: 0 };
+                    if (!AppState.activePhotoId) setActivePhoto(id);
+                    renderLibrary();
+                    generatePrintPreview();
+                };
+                img.src = url;
+            });
+        }
+
+        function renderLibrary() {
+            els.photoGrid.innerHTML = '';
+            AppState.photos.forEach(photo => {
+                const item = document.createElement('div');
+                item.className = `photo-item ${photo.id === AppState.activePhotoId ? 'active' : ''}`;
+                item.onclick = (e) => { if(!e.target.classList.contains('copy-input') && !e.target.classList.contains('btn-delete')) setActivePhoto(photo.id); };
+
+                const img = document.createElement('img');
+                img.src = photo.url;
+
+                const controls = document.createElement('div');
+                controls.className = 'photo-controls';
+
+                const copiesInput = document.createElement('input');
+                copiesInput.type = 'number'; copiesInput.min = '1'; copiesInput.value = photo.copies; copiesInput.className = 'copy-input'; copiesInput.title = "Copies";
+                copiesInput.onchange = (e) => { photo.copies = parseInt(e.target.value) || 1; if(els.previewContainer.style.display === 'flex') generatePrintPreview(); };
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-delete'; delBtn.innerHTML = '×';
+                delBtn.onclick = (e) => { e.stopPropagation(); deletePhoto(photo.id); };
+
+                controls.appendChild(copiesInput); controls.appendChild(delBtn);
+                item.appendChild(img); item.appendChild(controls);
+                els.photoGrid.appendChild(item);
+            });
+        }
+
+        function setActivePhoto(id) {
+            AppState.activePhotoId = id;
+            renderLibrary(); syncAdjustmentSliders();
+            if(els.editorContainer.style.display !== 'none') renderCanvas();
+        }
+
+        function deletePhoto(id) {
+            AppState.photos = AppState.photos.filter(p => p.id !== id);
+            delete AppState.adjustments[id];
+            if (AppState.activePhotoId === id) AppState.activePhotoId = AppState.photos.length > 0 ? AppState.photos[0].id : null;
+            renderLibrary(); syncAdjustmentSliders();
+            if(els.editorContainer.style.display !== 'none') renderCanvas();
+            if(els.previewContainer.style.display === 'flex') generatePrintPreview();
+        }
+
+        function syncAdjustmentSliders() {
+            if (!AppState.activePhotoId) return;
+            const adj = AppState.adjustments[AppState.activePhotoId];
+            els.zoomRange.value = adj.zoom; els.brightRange.value = adj.brightness; els.contrastRange.value = adj.contrast; els.rotateRange.value = adj.rotation;
+            document.getElementById('zoomVal').innerText = adj.zoom + '%'; document.getElementById('brightVal').innerText = adj.brightness + '%'; document.getElementById('contrastVal').innerText = adj.contrast + '%'; document.getElementById('rotateVal').innerText = adj.rotation + '°';
+        }
+
+        function updateAdjustments() {
+            if (!AppState.activePhotoId) return;
+            const adj = AppState.adjustments[AppState.activePhotoId];
+            adj.zoom = parseInt(els.zoomRange.value); adj.brightness = parseInt(els.brightRange.value); adj.contrast = parseInt(els.contrastRange.value); adj.rotation = parseInt(els.rotateRange.value);
+            syncAdjustmentSliders(); renderCanvas();
+        }
+
+        function resetAdjustments() {
+            if (!AppState.activePhotoId) return;
+            AppState.adjustments[AppState.activePhotoId] = { zoom: 100, brightness: 100, contrast: 100, rotation: 0, panX: 0, panY: 0 };
+            syncAdjustmentSliders(); renderCanvas();
+        }
+
+        function handlePresetChange() {
+            const val = els.presetSelect.value;
+            AppState.settings.preset = val;
+            if (val !== 'custom') {
+                const opt = els.presetSelect.options[els.presetSelect.selectedIndex];
+                AppState.settings.widthMm = parseFloat(opt.dataset.w); AppState.settings.heightMm = parseFloat(opt.dataset.h);
+                els.customWidth.value = AppState.settings.widthMm; els.customHeight.value = AppState.settings.heightMm;
+            }
+            saveSettings(); renderCanvas(); if(els.previewContainer.style.display === 'flex') generatePrintPreview();
+        }
+
+        function handleCustomSizeChange() {
+            els.presetSelect.value = 'custom'; AppState.settings.preset = 'custom';
+            AppState.settings.widthMm = parseFloat(els.customWidth.value) || 51; AppState.settings.heightMm = parseFloat(els.customHeight.value) || 51;
+            saveSettings(); renderCanvas(); if(els.previewContainer.style.display === 'flex') generatePrintPreview();
+        }
+
+        function handlePaperChange() {
+            const opt = els.paperSelect.options[els.paperSelect.selectedIndex];
+            AppState.settings.paper = els.paperSelect.value; AppState.settings.paperWidthMm = parseFloat(opt.dataset.w); AppState.settings.paperHeightMm = parseFloat(opt.dataset.h);
+            saveSettings(); if(els.previewContainer.style.display === 'flex') generatePrintPreview();
+        }
+
+        function handleOrientationChange() { AppState.settings.orientation = els.orientationSelect.value; saveSettings(); if(els.previewContainer.style.display === 'flex') generatePrintPreview(); }
+
+        function updateSettings() {
+            AppState.settings.marginMm = parseFloat(els.paperMargin.value) || 0; AppState.settings.spacingMm = parseFloat(els.photoSpacing.value) || 0;
+            AppState.settings.strokeMm = parseFloat(els.strokeMm.value) || 0; AppState.settings.strokeColor = els.strokeColor.value;
+            saveSettings(); if(els.editorContainer.style.display !== 'none') renderCanvas(); if(els.previewContainer.style.display === 'flex') generatePrintPreview();
+        }
+
+        function startPan(e) { if (!AppState.activePhotoId || els.editorContainer.style.display === 'none') return; AppState.isDragging = true; AppState.startX = e.clientX; AppState.startY = e.clientY; }
+        function doPan(e) { if (!AppState.isDragging || !AppState.activePhotoId) return; const dx = e.clientX - AppState.startX; const dy = e.clientY - AppState.startY; AppState.startX = e.clientX; AppState.startY = e.clientY; const adj = AppState.adjustments[AppState.activePhotoId]; adj.panX += dx; adj.panY += dy; renderCanvas(); }
+        function endPan() { AppState.isDragging = false; }
+        function mmToPx(mm, dpi = AppState.DPI) { return (mm * dpi) / 25.4; }
+        function getEffectivePaperSize() { let w = AppState.settings.paperWidthMm; let h = AppState.settings.paperHeightMm; if (AppState.settings.orientation === 'landscape') return { w: h, h: w }; return { w, h }; }
+
+        function renderCanvas() {
+            if (!AppState.activePhotoId) { els.ctx.clearRect(0, 0, els.canvas.width, els.canvas.height); return; }
+            const photo = AppState.photos.find(p => p.id === AppState.activePhotoId);
+            const adj = AppState.adjustments[AppState.activePhotoId]; const img = photo.imgElement;
+            const wPx = mmToPx(AppState.settings.widthMm); const hPx = mmToPx(AppState.settings.heightMm);
+            
+            els.canvas.width = wPx; els.canvas.height = hPx; const ctx = els.ctx; ctx.clearRect(0, 0, wPx, hPx);
+            ctx.filter = `brightness(${adj.brightness}%) contrast(${adj.contrast}%)`;
+            ctx.save(); ctx.translate(wPx / 2, hPx / 2); ctx.translate(adj.panX, adj.panY); ctx.rotate(adj.rotation * Math.PI / 180);
+            const baseScale = Math.max(wPx / img.width, hPx / img.height); const finalScale = baseScale * (adj.zoom / 100);
+            ctx.scale(finalScale, finalScale); ctx.drawImage(img, -img.width / 2, -img.height / 2); ctx.restore(); ctx.filter = 'none';
+
+            if (AppState.settings.strokeMm > 0) { ctx.save(); ctx.strokeStyle = AppState.settings.strokeColor; const strokePx = mmToPx(AppState.settings.strokeMm); ctx.lineWidth = strokePx; ctx.strokeRect(strokePx / 2, strokePx / 2, wPx - strokePx, hPx - strokePx); ctx.restore(); }
+
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)'; ctx.setLineDash([5, 5]); ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(wPx/2, 0); ctx.lineTo(wPx/2, hPx); ctx.moveTo(0, hPx/2); ctx.lineTo(wPx, hPx/2); ctx.stroke();
+            const headHeight = hPx * 0.6; const headWidth = headHeight * 0.75; const topOffset = hPx * 0.15;
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.4)'; ctx.strokeRect((wPx - headWidth) / 2, topOffset, headWidth, headHeight); ctx.setLineDash([]);
+        }
+
+        function generatePrintPages() {
+            const pages = []; const { w: paperWMm, h: paperHMm } = getEffectivePaperSize();
+            const pw = mmToPx(paperWMm); const ph = mmToPx(paperHMm); const mw = mmToPx(AppState.settings.marginMm); const spacing = mmToPx(AppState.settings.spacingMm); const cw = mmToPx(AppState.settings.widthMm); const ch = mmToPx(AppState.settings.heightMm);
+            const cols = Math.floor(((pw - (2 * mw)) + spacing) / (cw + spacing)); const rows = Math.floor(((ph - (2 * mw)) + spacing) / (ch + spacing)); const maxPhotosPerPage = cols * rows;
+            if (maxPhotosPerPage <= 0) return [];
+
+            const printQueue = []; AppState.photos.forEach(photo => { for (let i = 0; i < photo.copies; i++) printQueue.push(photo); });
+
+            for (let i = 0; i < printQueue.length; i += maxPhotosPerPage) {
+                const chunk = printQueue.slice(i, i + maxPhotosPerPage);
+                const canvas = document.createElement('canvas'); canvas.width = pw; canvas.height = ph; const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, pw, ph);
+
+                let currentX = mw; let currentY = mw; let photoCount = 0;
+
+                chunk.forEach(photo => {
+                    const adj = AppState.adjustments[photo.id]; const img = photo.imgElement;
+                    ctx.save(); ctx.translate(currentX + cw/2, currentY + ch/2);
+                    ctx.beginPath(); ctx.rect(-cw/2, -ch/2, cw, ch); ctx.clip();
+                    ctx.filter = `brightness(${adj.brightness}%) contrast(${adj.contrast}%)`;
+                    ctx.translate(adj.panX, adj.panY); ctx.rotate(adj.rotation * Math.PI / 180);
+                    const baseScale = Math.max(cw / img.width, ch / img.height); const finalScale = baseScale * (adj.zoom / 100);
+                    ctx.scale(finalScale, finalScale); ctx.drawImage(img, -img.width / 2, -img.height / 2); ctx.restore();
+
+                    if (AppState.settings.strokeMm > 0) { ctx.save(); ctx.strokeStyle = AppState.settings.strokeColor; const strokePx = mmToPx(AppState.settings.strokeMm); ctx.lineWidth = strokePx; ctx.strokeRect(currentX + strokePx / 2, currentY + strokePx / 2, cw - strokePx, ch - strokePx); ctx.restore(); }
+
+                    // PER-PHOTO INDIVIDUAL WATERMARK
+                    if (!AppState.isPaidUser) {
+                        ctx.save();
+                        ctx.translate(currentX + cw / 2, currentY + ch / 2);
+                        ctx.beginPath(); ctx.rect(-cw / 2, -ch / 2, cw, ch); ctx.clip();
+                        const fontSize = cw / 6; 
+                        ctx.font = "bold " + fontSize + "px Arial";
+                        ctx.fillStyle = "rgba(220, 53, 69, 0.4)";
+                        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.rotate(-Math.PI / 4);
+                        ctx.fillText("PREVIEW", 0, -fontSize / 1.5);
+                        ctx.fillText("WATERMARK", 0, fontSize / 1.5);
+                        ctx.restore();
+                    }
+
+                    ctx.strokeStyle = '#cccccc'; ctx.lineWidth = 1; ctx.strokeRect(currentX, currentY, cw, ch);
+                    photoCount++; currentX += cw + spacing;
+                    if (photoCount % cols === 0) { currentX = mw; currentY += ch + spacing; }
+                });
+                pages.push(canvas);
+            }
+            return pages;
+        }
+
+        function generatePrintPreview() {
+            els.previewContainer.innerHTML = '';
+            if (AppState.photos.length === 0) { els.layoutStatus.style.display = 'none'; return; }
+            const pages = generatePrintPages(); els.layoutStatus.style.display = 'block';
+            if (pages.length === 0) { els.layoutStatus.className = 'badge error'; els.layoutStatus.innerText = 'Paper size or margins too small!'; return; }
+            const totalRequested = AppState.photos.reduce((sum, p) => sum + p.copies, 0); els.layoutStatus.className = 'badge'; els.layoutStatus.innerText = `Generated ${pages.length} page(s) for ${totalRequested} photos`;
+
+            pages.forEach((canvas) => {
+                const wrapper = document.createElement('div'); wrapper.className = 'sheet';
+                const screenW = els.previewContainer.clientWidth - 60; const scale = Math.min(screenW / canvas.width, 1);
+                canvas.style.width = `${canvas.width * scale}px`; canvas.style.height = `${canvas.height * scale}px`;
+                wrapper.appendChild(canvas); els.previewContainer.appendChild(wrapper);
+            });
+        }
+
+        function switchTab(target) { els.tabs.forEach(t => t.classList.remove('active')); document.querySelector(`.tab[data-target="${target}"]`).classList.add('active'); if (target === 'editor') { els.editorContainer.style.display = 'flex'; els.previewContainer.style.display = 'none'; renderCanvas(); } else { els.editorContainer.style.display = 'none'; els.previewContainer.style.display = 'flex'; generatePrintPreview(); } }
+
+        function exportSinglePhoto() {
+            if (!AppState.activePhotoId) return alert("No photo selected");
+            const wPx = mmToPx(AppState.settings.widthMm); const hPx = mmToPx(AppState.settings.heightMm);
+            const exportCanvas = document.createElement('canvas'); exportCanvas.width = wPx; exportCanvas.height = hPx; const ctx = exportCanvas.getContext('2d');
+            const photo = AppState.photos.find(p => p.id === AppState.activePhotoId); const adj = AppState.adjustments[AppState.activePhotoId]; const img = photo.imgElement;
+            ctx.filter = `brightness(${adj.brightness}%) contrast(${adj.contrast}%)`;
+            ctx.save(); ctx.translate(wPx / 2, hPx / 2); ctx.translate(adj.panX, adj.panY); ctx.rotate(adj.rotation * Math.PI / 180);
+            const baseScale = Math.max(wPx / img.width, hPx / img.height); const finalScale = baseScale * (adj.zoom / 100);
+            ctx.scale(finalScale, finalScale); ctx.drawImage(img, -img.width / 2, -img.height / 2); ctx.restore();
+            if (AppState.settings.strokeMm > 0) { ctx.save(); ctx.strokeStyle = AppState.settings.strokeColor; const strokePx = mmToPx(AppState.settings.strokeMm); ctx.lineWidth = strokePx; ctx.strokeRect(strokePx / 2, strokePx / 2, wPx - strokePx, hPx - strokePx); ctx.restore(); }
+            const link = document.createElement('a'); link.download = `passport_photo_${Date.now()}.jpg`; link.href = exportCanvas.toDataURL('image/jpeg', 1.0); link.click();
+        }
+
+        function downloadSheets() {
+            if (AppState.photos.length === 0) return alert("Add photos to layout first.");
+            const pages = generatePrintPages(); if (pages.length === 0) return alert("Cannot fit any photos on the selected paper layout.");
+            pages.forEach((canvas, index) => { const link = document.createElement('a'); const suffix = pages.length > 1 ? `_page_${index + 1}` : ''; link.download = `passport_sheet${suffix}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click(); });
+        }
+
+        function printSheet() {
+            if (AppState.photos.length === 0) return alert("Add photos to layout first.");
+            const pages = generatePrintPages(); if (pages.length === 0) return alert("Cannot fit any photos on the selected paper layout.");
+            els.printArea.innerHTML = ''; const style = document.createElement('style'); style.innerHTML = `@page { size: ${AppState.settings.orientation}; margin: 0; }`; els.printArea.appendChild(style);
+            pages.forEach(canvas => { const img = document.createElement('img'); img.src = canvas.toDataURL('image/png'); img.className = 'print-page'; img.style.width = `${canvas.width}px`; img.style.height = `${canvas.height}px`; els.printArea.appendChild(img); });
+            setTimeout(() => { window.print(); }, 300);
+        }
+
+        window.addEventListener('resize', () => { if (els.previewContainer.style.display === 'flex') generatePrintPreview(); });
+
+        init();
+    </script>
+</body>
+</html>
