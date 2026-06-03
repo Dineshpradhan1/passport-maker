@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Passport Photo Maker Pro | Editor</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         :root[data-theme="dark"] {
             --bg-base: #121212;
@@ -120,7 +123,9 @@
             <div style="width: 1px; height: 30px; background: var(--border); margin: 0 5px;"></div>
             <button class="btn-secondary" id="btnExportSingle">Save Single Photo</button>
             <button class="btn-primary" id="btnDownloadSheet" style="background-color: #6f42c1;">Download Sheet(s)</button>
-            <button class="btn-primary" id="btnPrint">Print / Save as PDF</button>
+            
+            <button class="btn-primary" id="btnPrint">Print</button>
+            <button class="btn-primary" id="btnSavePDF" style="background-color: #dc3545;">Save PDF</button>
         </div>
     </div>
 
@@ -304,6 +309,7 @@
             photoSpacing: document.getElementById('photoSpacing'),
             layoutStatus: document.getElementById('layoutStatus'),
             btnPrint: document.getElementById('btnPrint'),
+            btnSavePDF: document.getElementById('btnSavePDF'), // NEW PDF BUTTON
             btnExportSingle: document.getElementById('btnExportSingle'),
             btnDownloadSheet: document.getElementById('btnDownloadSheet'),
             btnResetImage: document.getElementById('btnResetImage'),
@@ -371,8 +377,9 @@
             els.paperMargin.addEventListener('input', updateSettings);
             els.photoSpacing.addEventListener('input', updateSettings);
             
-            // Buttons now directly execute downloads without paywall checks
+            // Output Actions
             els.btnPrint.addEventListener('click', printSheet);
+            els.btnSavePDF.addEventListener('click', saveAsPDF); // NEW LISTENER
             els.btnExportSingle.addEventListener('click', exportSinglePhoto);
             els.btnDownloadSheet.addEventListener('click', downloadSheets);
 
@@ -664,6 +671,39 @@
             if (AppState.photos.length === 0) return alert("Add photos to layout first.");
             const pages = generatePrintPages(); if (pages.length === 0) return alert("Cannot fit any photos on the selected paper layout.");
             pages.forEach((canvas, index) => { const link = document.createElement('a'); const suffix = pages.length > 1 ? `_page_${index + 1}` : ''; link.download = `passport_sheet${suffix}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click(); });
+        }
+
+        // --- NEW PDF GENERATION FUNCTION ---
+        function saveAsPDF() {
+            if (AppState.photos.length === 0) return alert("Add photos to layout first.");
+            const pages = generatePrintPages();
+            if (pages.length === 0) return alert("Cannot fit any photos on the selected paper layout.");
+
+            // Get jsPDF from window object (loaded via CDN script tag)
+            const { jsPDF } = window.jspdf;
+            
+            const orientation = AppState.settings.orientation === 'landscape' ? 'l' : 'p';
+            const paperW = AppState.settings.paperWidthMm;
+            const paperH = AppState.settings.paperHeightMm;
+            
+            // Initialize jsPDF doc
+            const pdf = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: [paperW, paperH]
+            });
+
+            const effectiveSize = getEffectivePaperSize();
+
+            pages.forEach((canvas, index) => {
+                if (index > 0) pdf.addPage([paperW, paperH], orientation);
+                
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                // Add canvas image to PDF filling the entire defined page dimensions
+                pdf.addImage(imgData, 'JPEG', 0, 0, effectiveSize.w, effectiveSize.h);
+            });
+
+            pdf.save(`passport_layout_${Date.now()}.pdf`);
         }
 
         function printSheet() {
