@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Passport Photo Maker Pro | Editor</title>
     
-    <!-- External Library for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
@@ -75,7 +74,7 @@
         .form-control:focus { border-color: var(--accent); }
         input[type="range"] { width: 100%; margin-top: 5px; accent-color: var(--accent); }
 
-        .upload-area { border: 2px dashed var(--border); padding: 25px 20px; text-align: center; border-radius: 6px; cursor: margin-bottom: 15px; transition: border-color 0.2s, background-color 0.2s; color: var(--text-muted); font-size: 0.9rem; }
+        .upload-area { border: 2px dashed var(--border); padding: 25px 20px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 15px; transition: border-color 0.2s, background-color 0.2s; color: var(--text-muted); font-size: 0.9rem; }
         .upload-area:hover { border-color: var(--accent); background-color: rgba(0, 123, 255, 0.05); }
 
         .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -130,7 +129,6 @@
     </div>
 
     <div class="app-container">
-        <!-- Left Sidebar: Library -->
         <div class="sidebar">
             <div class="panel">
                 <div class="panel-title">Photo Library</div>
@@ -143,7 +141,6 @@
             </div>
         </div>
 
-        <!-- Center Workspace -->
         <div class="workspace">
             <div class="tabs">
                 <div class="tab active" data-target="editor">Edit Photo</div>
@@ -158,7 +155,6 @@
             <div id="print-preview-container"></div>
         </div>
 
-        <!-- Right Sidebar: Controls -->
         <div class="sidebar sidebar-right">
             <div class="panel">
                 <div class="panel-title">Passport Presets</div>
@@ -243,6 +239,16 @@
                         <option value="landscape">Landscape</option>
                     </select>
                 </div>
+                
+                <div class="form-group">
+                    <label>Grid Alignment</label>
+                    <select class="form-control" id="alignmentSelect">
+                        <option value="center" selected>Center Page</option>
+                        <option value="top-left">Top Left</option>
+                        <option value="top-center">Top Center</option>
+                    </select>
+                </div>
+
                 <div style="display: flex; gap: 10px;">
                     <div class="form-group" style="flex: 1;">
                         <label>Margin (mm)</label>
@@ -274,6 +280,7 @@
                 paperWidthMm: 210,
                 paperHeightMm: 297,
                 orientation: 'portrait',
+                alignment: 'center', // Default new setting
                 marginMm: 10,
                 spacingMm: 2,
                 strokeMm: 0,
@@ -309,6 +316,7 @@
             strokeColor: document.getElementById('strokeColor'),
             paperSelect: document.getElementById('paperSelect'),
             orientationSelect: document.getElementById('orientationSelect'),
+            alignmentSelect: document.getElementById('alignmentSelect'), // New alignment element
             paperMargin: document.getElementById('paperMargin'),
             photoSpacing: document.getElementById('photoSpacing'),
             layoutStatus: document.getElementById('layoutStatus'),
@@ -378,6 +386,7 @@
             els.strokeColor.addEventListener('input', updateSettings);
             els.paperSelect.addEventListener('change', handlePaperChange);
             els.orientationSelect.addEventListener('change', handleOrientationChange);
+            els.alignmentSelect.addEventListener('change', updateSettings); // Added listener for new dropdown
             els.paperMargin.addEventListener('input', updateSettings);
             els.photoSpacing.addEventListener('input', updateSettings);
             
@@ -452,6 +461,7 @@
                     els.strokeColor.value = AppState.settings.strokeColor || '#ffffff';
                     els.paperSelect.value = AppState.settings.paper;
                     els.orientationSelect.value = AppState.settings.orientation;
+                    els.alignmentSelect.value = AppState.settings.alignment || 'center'; // Load alignment
                     els.paperMargin.value = AppState.settings.marginMm;
                     els.photoSpacing.value = AppState.settings.spacingMm;
                 } catch(e) {}
@@ -574,9 +584,14 @@
         function handleOrientationChange() { AppState.settings.orientation = els.orientationSelect.value; saveSettings(); if(els.previewContainer.style.display === 'flex') generatePrintPreview(); }
 
         function updateSettings() {
-            AppState.settings.marginMm = parseFloat(els.paperMargin.value) || 0; AppState.settings.spacingMm = parseFloat(els.photoSpacing.value) || 0;
-            AppState.settings.strokeMm = parseFloat(els.strokeMm.value) || 0; AppState.settings.strokeColor = els.strokeColor.value;
-            saveSettings(); if(els.editorContainer.style.display !== 'none') renderCanvas(); if(els.previewContainer.style.display === 'flex') generatePrintPreview();
+            AppState.settings.marginMm = parseFloat(els.paperMargin.value) || 0; 
+            AppState.settings.spacingMm = parseFloat(els.photoSpacing.value) || 0;
+            AppState.settings.strokeMm = parseFloat(els.strokeMm.value) || 0; 
+            AppState.settings.strokeColor = els.strokeColor.value;
+            AppState.settings.alignment = els.alignmentSelect.value; // Update alignment state
+            saveSettings(); 
+            if(els.editorContainer.style.display !== 'none') renderCanvas(); 
+            if(els.previewContainer.style.display === 'flex') generatePrintPreview();
         }
 
         function startPan(e) { if (!AppState.activePhotoId || els.editorContainer.style.display === 'none') return; AppState.isDragging = true; AppState.startX = e.clientX; AppState.startY = e.clientY; }
@@ -613,18 +628,36 @@
 
             const printQueue = []; AppState.photos.forEach(photo => { for (let i = 0; i < photo.copies; i++) printQueue.push(photo); });
 
-            // --- PERFECT CENTERING MATH ---
+            // --- ALIGNMENT MATH ---
             const gridWidth = (cols * cw) + ((cols - 1) * spacing);
             const gridHeight = (rows * ch) + ((rows - 1) * spacing);
-            const startX = (pw - gridWidth) / 2;
-            const startY = (ph - gridHeight) / 2;
+            
+            let globalStartX = mw;
+            let globalStartY = mw;
+
+            if (AppState.settings.alignment === 'center') {
+                globalStartX = (pw - gridWidth) / 2;
+                globalStartY = (ph - gridHeight) / 2;
+            } else if (AppState.settings.alignment === 'top-center') {
+                globalStartX = (pw - gridWidth) / 2;
+                globalStartY = mw;
+            } else { // top-left
+                globalStartX = mw;
+                globalStartY = mw;
+            }
+
+            // Ensure grid never renders off the top or left edge regardless of user input
+            globalStartX = Math.max(globalStartX, mw);
+            globalStartY = Math.max(globalStartY, mw);
 
             for (let i = 0; i < printQueue.length; i += maxPhotosPerPage) {
                 const chunk = printQueue.slice(i, i + maxPhotosPerPage);
                 const canvas = document.createElement('canvas'); canvas.width = pw; canvas.height = ph; const ctx = canvas.getContext('2d');
                 ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, pw, ph);
 
-                let currentX = startX; let currentY = startY; let photoCount = 0;
+                let currentX = globalStartX; 
+                let currentY = globalStartY; 
+                let photoCount = 0;
 
                 chunk.forEach(photo => {
                     const adj = AppState.adjustments[photo.id]; const img = photo.imgElement;
@@ -639,7 +672,7 @@
 
                     ctx.strokeStyle = '#cccccc'; ctx.lineWidth = 1; ctx.strokeRect(currentX, currentY, cw, ch);
                     photoCount++; currentX += cw + spacing;
-                    if (photoCount % cols === 0) { currentX = startX; currentY += ch + spacing; }
+                    if (photoCount % cols === 0) { currentX = globalStartX; currentY += ch + spacing; }
                 });
                 pages.push(canvas);
             }
