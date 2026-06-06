@@ -162,6 +162,7 @@
                 <div class="form-group">
                     <select class="form-control" id="presetSelect">
                         <option value="custom">Custom Size</option>
+                        <option value="custom_1" data-w="27.94" data-h="25.4">Custom (1.1 x 1 inch)</option>
                         <option value="india" data-w="35" data-h="45">India (35x45 mm)</option>
                         <option value="usa" data-w="51" data-h="51" selected>USA (2x2 inch)</option>
                         <option value="uk" data-w="35" data-h="45">UK (35x45 mm)</option>
@@ -309,7 +310,7 @@
             photoSpacing: document.getElementById('photoSpacing'),
             layoutStatus: document.getElementById('layoutStatus'),
             btnPrint: document.getElementById('btnPrint'),
-            btnSavePDF: document.getElementById('btnSavePDF'), // NEW PDF BUTTON
+            btnSavePDF: document.getElementById('btnSavePDF'),
             btnExportSingle: document.getElementById('btnExportSingle'),
             btnDownloadSheet: document.getElementById('btnDownloadSheet'),
             btnResetImage: document.getElementById('btnResetImage'),
@@ -379,7 +380,7 @@
             
             // Output Actions
             els.btnPrint.addEventListener('click', printSheet);
-            els.btnSavePDF.addEventListener('click', saveAsPDF); // NEW LISTENER
+            els.btnSavePDF.addEventListener('click', saveAsPDF); 
             els.btnExportSingle.addEventListener('click', exportSinglePhoto);
             els.btnDownloadSheet.addEventListener('click', downloadSheets);
 
@@ -673,20 +674,17 @@
             pages.forEach((canvas, index) => { const link = document.createElement('a'); const suffix = pages.length > 1 ? `_page_${index + 1}` : ''; link.download = `passport_sheet${suffix}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click(); });
         }
 
-        // --- NEW PDF GENERATION FUNCTION ---
+        // --- PDF GENERATION FUNCTION ---
         function saveAsPDF() {
             if (AppState.photos.length === 0) return alert("Add photos to layout first.");
             const pages = generatePrintPages();
             if (pages.length === 0) return alert("Cannot fit any photos on the selected paper layout.");
 
-            // Get jsPDF from window object (loaded via CDN script tag)
             const { jsPDF } = window.jspdf;
-            
             const orientation = AppState.settings.orientation === 'landscape' ? 'l' : 'p';
             const paperW = AppState.settings.paperWidthMm;
             const paperH = AppState.settings.paperHeightMm;
             
-            // Initialize jsPDF doc
             const pdf = new jsPDF({
                 orientation: orientation,
                 unit: 'mm',
@@ -697,9 +695,7 @@
 
             pages.forEach((canvas, index) => {
                 if (index > 0) pdf.addPage([paperW, paperH], orientation);
-                
                 const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                // Add canvas image to PDF filling the entire defined page dimensions
                 pdf.addImage(imgData, 'JPEG', 0, 0, effectiveSize.w, effectiveSize.h);
             });
 
